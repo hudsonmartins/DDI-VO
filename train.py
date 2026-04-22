@@ -251,7 +251,6 @@ if __name__ == "__main__":
     parser.add_argument("experiment", type=str)
     parser.add_argument("--conf", type=str, required=True)
     parser.add_argument("--use_cuda", action="store_true")
-    parser.add_argument("--start_iter", type=int, default=0)
 
     args = parser.parse_args()
     main(args)
