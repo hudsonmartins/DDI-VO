@@ -10,8 +10,8 @@ from utils import get_patches, make_intrinsics_layer, get_sorted_matches
 class PatchEncoder(nn.Module):
     def __init__(self, config):
         super().__init__()
-        patch_dim = 5 * config.photo_vo.model.patch_size ** 2
-        self.dim_emb = config.photo_vo.model.dim_emb
+        patch_dim = 5 * config.ddi_vo.model.patch_size ** 2
+        self.dim_emb = config.ddi_vo.model.dim_emb
         
         self.patch_proj = nn.Sequential(
             nn.Linear(patch_dim, self.dim_emb),
@@ -133,21 +133,19 @@ class MotionEstimator(nn.Module):
     def __init__(self, config):
         super().__init__()
         self.cross_attn = nn.MultiheadAttention(
-            embed_dim=config.photo_vo.model.dim_emb, num_heads=8
+            embed_dim=config.ddi_vo.model.dim_emb, num_heads=8
         )
-        self.fc = nn.Linear(config.photo_vo.model.dim_emb, 6)
+        self.fc = nn.Linear(config.ddi_vo.model.dim_emb, 6)
 
     def forward(self, image_embs, patch_embs):
         query = image_embs.unsqueeze(0)
         key = value = patch_embs.permute(1, 0, 2)  # Swap batch and sequence dimensions
-        attn_output, _ = self.cross_attn(query, key, value)    
-        fused = attn_output + query    
+        fused, _ = self.cross_attn(query, key, value)      
         fused = fused.squeeze(0)
-        
         return self.fc(fused)
        
 
-class PhotoVoModel(nn.Module):
+class DDIVO(nn.Module):
     def __init__(self, config):
         super().__init__()
         self.config = config
@@ -167,7 +165,7 @@ class PhotoVoModel(nn.Module):
         kpts0, kpts1 = self.features['keypoints0'], self.features['keypoints1']
         scores0, scores1 = self.features['matching_scores0'], self.features['matching_scores1']
         sorted_matches = get_sorted_matches(self.features)
-        sorted_matches = sorted_matches[:, :self.config.photo_vo.model.num_matches]
+        sorted_matches = sorted_matches[:, :self.config.ddi_vo.model.num_matches]
 
         # Initialize containers
         kpts0_valid, kpts1_valid = None, None
@@ -210,8 +208,8 @@ class PhotoVoModel(nn.Module):
         im1 = torch.cat([data['view1']['image'], il], dim=1)
 
         # Extract local patches from both views using valid keypoints
-        patches0 = get_patches(im0, kpts0_valid, self.config.photo_vo.model.patch_size)
-        patches1 = get_patches(im1, kpts1_valid, self.config.photo_vo.model.patch_size)
+        patches0 = get_patches(im0, kpts0_valid, self.config.ddi_vo.model.patch_size)
+        patches1 = get_patches(im1, kpts1_valid, self.config.ddi_vo.model.patch_size)
 
         # Store patch-related info in data
         data['view0']['patches'] = patches0
@@ -227,5 +225,5 @@ class PhotoVoModel(nn.Module):
 
         return {**data, **self.features}
 
-def get_photo_vo_model(config):
-    return PhotoVoModel(config)
+def get_ddi_vo_model(config):
+    return DDIVO(config)

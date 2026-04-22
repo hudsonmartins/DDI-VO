@@ -7,7 +7,7 @@ import argparse
 import numpy as np
 
 from omegaconf import OmegaConf
-from model import get_photo_vo_model
+from model import get_ddi_vo_model
 from utils import euler_angles_to_matrix
 from torchvision import transforms
 
@@ -16,25 +16,26 @@ from modvo.vo.tracker import Tracker
 POSE_MEAN = [0,0,0,0,0,0]
 POSE_STD = [0.01, 0.01, 0.01, 0.2, 0.2, 0.2]
 
-class PhotoVOTracker(Tracker):
+class DDIVOTracker(Tracker):
     def __init__(self, **params):
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.first_image = True
         self.index = 0
         self.img0, self.img1 = None, None
         self.camera = params['camera']
-        self.photo_vo_model = params['model']
-        self.photo_vo_model.to(self.device)
-        self.photo_vo_model.eval()
+        self.ddi_vo_model = params['model']
+        self.ddi_vo_model.to(self.device)
+        self.ddi_vo_model.eval()
     
 
     def get_input(self):
         preprocess = transforms.Compose([
+            transforms.ToPILImage(),
             transforms.Resize((640, 640)),
             transforms.ToTensor(),
         ])
-        sx = 640 / self.img0.size[0]
-        sy = 640 / self.img0.size[1]
+        sx = 640 / self.img0.shape[1]
+        sy = 640 / self.img0.shape[0]
         
         imgs = [preprocess(img).unsqueeze(0) for img in [self.img0, self.img1]]
         data = {'view0': {'image': imgs[0].to(self.device)}, 
@@ -53,8 +54,8 @@ class PhotoVOTracker(Tracker):
             else:
                 self.img1 = image
                 data = self.get_input()
-                #vo = self.photo_vo_model(data.unsqueeze(0))
-                output = self.photo_vo_model(data)
+                #vo = self.ddi_vo_model(data.unsqueeze(0))
+                output = self.ddi_vo_model(data)
                 vo = output['pred_vo']
                 vo = vo.squeeze(0)
                 vo = vo * torch.tensor(POSE_STD).to(self.device) + torch.tensor(POSE_MEAN).to(self.device)
@@ -74,7 +75,7 @@ def main():
     os.makedirs(args.output_path, exist_ok=True)
     log_fopen = open(os.path.join(args.output_path, args.trajectory_file), mode='a')
 
-    model = get_photo_vo_model(OmegaConf.load(args.model_config))
+    model = get_ddi_vo_model(OmegaConf.load(args.model_config))
     checkpoint = torch.load(args.model_path, map_location='cuda')
     model.load_state_dict(checkpoint['model'], strict=False)
 
@@ -99,7 +100,7 @@ def main():
     params = {k: v for k, v in config['dataloader'].items() if k != 'class'}
     dataloader = attr(**params)
 
-    vo = PhotoVOTracker(**{'model': model, 'camera': dataloader.get_camera()})    
+    vo = DDIVOTracker(**{'model': model, 'camera': dataloader.get_camera()})    
     while dataloader.is_running:
         print("-"*50)
         try:
@@ -109,7 +110,7 @@ def main():
             break
         if(image is None):
             continue
-        print('img ', image.size)
+        print('img ', image.shape)
         R, t = vo.track(image.copy())
                 
         if args.enable_gui:
@@ -141,8 +142,8 @@ def main():
 if __name__ == "__main__":
     
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dataset_config', type=str, default='configs/photo_vo.yaml', help='Path to dataset config file')
-    parser.add_argument('--model_config', type=str, default='configs/photo_vo_model.yaml', help='Path to model config file')
+    parser.add_argument('--dataset_config', type=str, default='configs/ddi_vo.yaml', help='Path to dataset config file')
+    parser.add_argument('--model_config', type=str, default='configs/ddi_vo_model.yaml', help='Path to model config file')
     parser.add_argument('--model_path', type=str, default='checkpoints/photovo.tar', help='Path to model checkpoint')
     parser.add_argument('--enable_gui', action='store_true', help='Enable GUI for visualization')
     parser.add_argument('--output_path', type=str, default='results', help='Path to output directory')

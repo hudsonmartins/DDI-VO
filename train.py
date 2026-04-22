@@ -12,7 +12,7 @@ from gluefactory.geometry.wrappers import Pose
 
 from loss import pose_loss_norm
 from iterators import get_iterator
-from model import get_photo_vo_model
+from model import get_ddi_vo_model
 from utils import batch_to_device, draw_camera_poses, draw_matches
 
 
@@ -207,7 +207,7 @@ def main(args):
 
     os.makedirs(args.experiment, exist_ok=True)
            
-    model = get_photo_vo_model(conf)
+    model = get_ddi_vo_model(conf)
     optimizer = torch.optim.Adam(model.parameters(), lr=conf.train.lr)
     model.to(device)
 

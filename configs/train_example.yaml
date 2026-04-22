@@ -1,0 +1,103 @@
+data:
+  datasets_names: 
+    - kitti
+    - queenscamp
+    - tartanair
+  seed: 42
+  batch_size: 6
+  kitti:
+    data_path: datasets/kitti
+    size: [640, 640]
+    max_skip: 0
+    train_sequences: 
+      - "00"
+      - "02"
+      - "08"
+      - "09"
+    val_sequences:
+      - "03"
+  queenscamp:
+    data_path: datasets/queenscamp
+    size: [640, 640]
+    max_skip: 2
+    train_sequences:
+      - "01"
+      - "02"
+      - "03"
+      - "04"
+      - "05"
+      - "10"
+      - "11"
+      - "13"
+      - "14"
+      - "15"
+    val_sequences:
+      - "12"
+  tartanair:
+    data_path: datasets/tartanair
+    size: [640, 640]
+    max_skip: 2
+    train_sequences:
+    - "abandonedfactory"
+    - "abandonedfactory_night"
+    - "amusement"
+    - "endofworld"
+    - "hospital"
+    - "neighborhood"
+    - "office"
+    - "oldtown"
+    - "seasidetown"
+    - "seasonsforest_winter"
+    - "westerndesert"
+    - "abandonedfactory_night"
+    - "carwelding"
+    - "gascola"
+    - "japanesealley"
+    - "ocean"
+    - "office2"
+    - "seasonsforest"
+    - "soulcity"
+    val_sequences:
+    - ""
+features_model:
+    name: two_view_pipeline
+    freeze: True
+    extractor:
+        name: extractors.superpoint_open
+        max_num_keypoints: 2048
+        force_num_keypoints: True
+        detection_threshold: -1
+        nms_radius: 3
+        trainable: False
+    matcher:
+        name: matchers.lightglue
+        features: superpoint
+        weights: weights/superpoint_lightglue.pth
+    ground_truth:
+        name: matchers.depth_matcher
+        th_positive: 3
+        th_negative: 5
+        th_epi: 5
+    allow_no_extract: True
+vit:
+    freeze: True
+    unfreeze_last: 4
+    patch_size: 16
+    dim_emb: 384
+    heads: 6
+    image_size: [640, 640]
+    depth: 12
+    pretrained: False
+    pretrained_weights: weights/deep_homography_vit.pth
+ddi_vo:
+    name: ddi_vo
+    model:
+      patch_size: 16
+      dim_emb: 384
+      num_matches: 128
+train:
+    save_every_iter: -1
+    lr: 1e-3
+    epochs: 100
+    max_train_iter: 2000
+    max_val_iter: 1000
