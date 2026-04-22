@@ -11,6 +11,7 @@ from model import get_ddi_vo_model
 from utils import euler_angles_to_matrix
 from torchvision import transforms
 
+from modvo.utils.geometry import matrix_to_quaternion
 from modvo.vo.tracker import Tracker
 
 POSE_MEAN = [0,0,0,0,0,0]
@@ -27,7 +28,6 @@ class DDIVOTracker(Tracker):
         self.ddi_vo_model.to(self.device)
         self.ddi_vo_model.eval()
     
-
     def get_input(self):
         preprocess = transforms.Compose([
             transforms.ToPILImage(),
@@ -54,7 +54,6 @@ class DDIVOTracker(Tracker):
             else:
                 self.img1 = image
                 data = self.get_input()
-                #vo = self.ddi_vo_model(data.unsqueeze(0))
                 output = self.ddi_vo_model(data)
                 vo = output['pred_vo']
                 vo = vo.squeeze(0)
@@ -79,7 +78,6 @@ def main():
     checkpoint = torch.load(args.model_path, map_location='cuda')
     model.load_state_dict(checkpoint['model'], strict=False)
 
-    from modvo.utils.geometry import matrix_to_quaternion
     
     with open(args.dataset_config, 'r') as f:
         config = yaml.safe_load(f)
@@ -124,7 +122,6 @@ def main():
     
 
 if __name__ == "__main__":
-    
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset_config', type=str, default='configs/ddi_vo.yaml', help='Path to dataset config file')
     parser.add_argument('--model_config', type=str, default='configs/ddi_vo_model.yaml', help='Path to model config file')

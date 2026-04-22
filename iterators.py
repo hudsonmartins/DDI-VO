@@ -154,21 +154,21 @@ if __name__ == "__main__":
         datasets_names=['tartanair','kitti', 'queenscamp'],
         train=True,
         kitti = {
-            'data_path': '/home/hudson/Desktop/Unicamp/datasets/kitti',
+            'data_path': 'datasets/kitti',
             'size': (640, 640),
             'train_sequences': ["01","08"],
             'val_sequences': ["03"],
             'max_skip': 0
         },
         queenscamp = {
-            'data_path': '/home/hudson/Desktop/Unicamp/datasets/queenscamp',
+            'data_path': 'datasets/queenscamp',
             'train_sequences': ["16"],
             'val_sequences': ["16"],
             'size': (640, 640),
             'max_skip': 0
         },
         tartanair = {
-            'data_path': '/home/hudson/Desktop/Unicamp/datasets/tartanair',
+            'data_path': 'datasets/tartanair',
             'train_sequences': ["abandonedfactory"],
             'val_sequences': [""],
             'size': (640, 640),

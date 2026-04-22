@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 from scipy.spatial.transform import Rotation as R
 from gluefactory.geometry.depth import sample_depth, project
 from gluefactory.utils.tensor import batch_to_device
-from gluefactory.visualization.viz2d import plot_heatmaps, plot_image_grid, plot_keypoints, plot_matches, cm_RdGn
 matplotlib.use('Agg') 
 
 
@@ -392,9 +391,4 @@ def prediction_to_kitti(pose):
     euler = pose[3:]
     angles = euler_to_matrix(euler)
     return np.concatenate((angles, pos), axis=1)
-
-def translation_to_skew_symmetric(t):
-    return np.array([[0, -t[2], t[1]],
-                    [t[2], 0, -t[0]],
-                    [-t[1], t[0], 0]])
 

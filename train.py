@@ -1,6 +1,5 @@
 import os
 import torch
-import glob
 import argparse
 import numpy as np
 import random
@@ -90,12 +89,10 @@ def train_epoch(model, train_loader, criterion, optimizer, epoch, device, max_it
         max_iters = len(train_loader)
 
     with tqdm(train_loader, unit="batch", total=max_iters, desc="Training") as tepoch:
-    #with tqdm(train_loader, unit="batch") as tepoch:
         for i, (images, gt, Ks) in enumerate(tepoch):
             if i >= max_iters:
                 break
             tepoch.set_description(f"Epoch {epoch}")
-            #images = images.transpose(1, 2).to(device)
             
             data = {'view0': {'image': images[:, 0], 'depth': None, 'camera': None},
                     'view1': {'image': images[:, 1], 'depth': None, 'camera': None},
